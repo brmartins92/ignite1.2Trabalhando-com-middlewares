@@ -9,26 +9,91 @@ app.use(cors());
 
 const users = [];
 
+function checkIfValidUUID(str) {
+  // Regular expression to check if string is a valid UUID
+  const regexExp = /^[0-9a-fA-F]{8}\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{12}$/gi;
+
+  return regexExp.test(str);
+}
+
 function checksExistsUserAccount(request, response, next) {
-  // Complete aqui
+  const username = request.headers.username;
+  const existName = users.find((user) => {
+    if (user.username === username) return user;
+  })
+
+  if (existName) {
+    request.user = existName;
+    return next();
+  } else {
+    response.status(404).json({
+      error: 'username invalid'
+    });
+  }
 }
 
 function checksCreateTodosUserAvailability(request, response, next) {
-  // Complete aqui
+  const user = request.user;
+  const userPlano = user.pro;
+  const userId = user.id;
+  const todos = user.todos;
+
+  if ((userPlano !== true) && (todos.length < 10)) {
+    next();
+  } else if ((userPlano === true)) {
+    next();
+  } else if ((userPlano !== true) && (todos.length >= 10)) {
+    return response.status(403).json();
+  }
 }
 
 function checksTodoExists(request, response, next) {
-  // Complete aqui
+  const username = request.headers.username;
+  const id = request.params.id;
+
+  if (!checkIfValidUUID(id)) {
+    return response.status(400).json({ error: 'id is not uiid' });
+  }
+
+  const existUser = users.find((user) => {
+    if (user.username === username) return user;
+  })
+
+  if (!existUser) {
+    return response.status(404).json({ error: 'User already exists' });
+  }
+
+  const existTodos = existUser.todos.find((todo) => {
+    if (todo.id === id) return todo;
+  })
+
+  if (!existTodos) {
+    return response.status(404).json({ error: 'Todo is not exist' });
+  }
+
+  if (existTodos) {
+    request.todo = existTodos;
+    request.user = existUser;
+    next();
+  }
 }
 
 function findUserById(request, response, next) {
-  // Complete aqui
+  const userId = request.params.id;
+  const userExist = users.find((user) => user.id === userId);
+
+  if (userExist) {
+    request.user = userExist;
+    next()
+  } else {
+    return response.status(404).json({ error: 'User already exists' });
+  }
 }
 
 app.post('/users', (request, response) => {
   const { name, username } = request.body;
 
-  const usernameAlreadyExists = users.some((user) => user.username === username);
+  const usernameAlreadyExists = users.find((user) => user.username === username);
 
   if (usernameAlreadyExists) {
     return response.status(400).json({ error: 'Username already exists' });

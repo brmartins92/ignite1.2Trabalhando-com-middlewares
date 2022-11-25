@@ -3,7 +3,7 @@ const { v4 } = require('uuid');
 const {
   users,
   checksTodoExists
-} = require('../../');
+} = require('../..');
 
 let response;
 let request;
@@ -183,4 +183,5 @@ describe('checksTodoExists', () => {
 
     expect(mockNext).not.toBeCalled();
   });
+
 })
